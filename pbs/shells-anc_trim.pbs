@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=8,walltime=24:00:00,mem=96gb
+#PBS -N shells-anc_t
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}.${PBS_ARRAYID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}.${PBS_ARRAYID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REF_KRAKEN4="/storage/home/aps216/scratch/Conch/genomes/nuclear/Cayo_Agua_2-3_S1_kraken4"
+RAW_READS="/storage/home/aps216/scratch/Conch/data/shells/anc/raw"
+TRIM_READS="/storage/home/aps216/scratch/Conch/data/shells/anc/trimmed"
+MAP_READS_NU="/storage/home/aps216/scratch/Conch/data/shells/anc/mapped/nuclear"
+FILT_READS_NU="/storage/home/aps216/scratch/Conch/data/shells/anc/filtered/nuclear"
+
+working_dir=$PBS_O_WORKDIR
+
+# ------------------------------------------------------------------------------
+# Trim sequences
+# ------------------------------------------------------------------------------
+
+cd $working_dir
+
+# Original aDNA pipeline created by Lua Admin Acct on 7/6/17. Modified by APS on 2020-04-30.
+
+## adapter trimming and merge reads
+RAW=`ls ${RAW_READS}/*_R1.fastq.gz | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${RAW_READS}/\(.*\)_R1..*:\1:"`
+
+    echo "Trimming for individual shell $RAW";
+
+module load leehom; leeHom --ancientdna -fq1 ${RAW_READS}/${RAW}_R1.fastq.gz -fq2 ${RAW_READS}/${RAW}_R2.fastq.gz -fqo ${TRIM_READS}/${RAW}
+
+exit;
+

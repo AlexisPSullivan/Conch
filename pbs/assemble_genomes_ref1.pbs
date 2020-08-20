@@ -1,0 +1,158 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=8,walltime=48:00:00,mem=256gb
+#PBS -N assemble-ref1
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REF_READS="/storage/home/aps216/scratch/Conch/data/RefAssembly/ref1"
+
+# ------------------------------------------------------------------------------
+# --- Velvet Optimizer
+# ------------------------------------------------------------------------------
+
+working_dir=$PBS_O_WORKDIR
+
+cd $working_dir
+
+# ========================================================================================
+# --- Assemble conch reference genome
+# ========================================================================================
+
+module load soapdenovo
+
+# ----------------------------------------------------------------------------------------
+# --- Make config file
+# ----------------------------------------------------------------------------------------
+
+#Cayo_Agua_2-3_S1_kraken1_TRIM_R1.rmdup.fastq
+
+IND=Cayo_Agua_2-3_S1_kraken1
+
+echo "Job began at [`date`]" > $IND.log
+
+echo "Making config file step began at [`date`]" >> $IND.log
+
+INSERT_SIZE=500
+
+CONFIG=conch.$IND.config
+
+head -n 20 $SOAP_DIR/example.config | \
+    sed \
+        -e "s/^max_rd_len.*/max_rd_len=150/" \
+        -e "s/^rd_len_cutoff.*/rd_len_cutoff=150/" \
+        -e "s/^avg_ins.*/avg_ins=$INSERT_SIZE/" \
+        -e "s:^q1=.*:q1=${REF_READS}/${IND}_TRIM_R1.rmdup.fastq:" \
+        -e "s:^q2=.*:q2=${REF_READS}/${IND}_TRIM_R2.rmdup.fastq:" > $CONFIG
+
+echo "Making config file step ended at [`date`]" >> $IND.log
+
+# ----------------------------------------------------------------------------------------
+# --- Grab ideal kmer length
+# ----------------------------------------------------------------------------------------
+
+echo "Grab ideal kmer length step began at [`date`]" >> $IND.log
+
+echo "[$IND]: Grabbing ideal kmer length"
+
+OUT_DIR=results/assembly1/$IND
+mkdir -p $OUT_DIR
+
+BEST_KMER=63
+
+if [[ "$BEST_KMER" == "k" || "$BEST_KMER" == "" ]]; then
+    echo "[$IND]: Estimation of ideal kmer not found. Setting to 63."
+    BEST_KMER=63
+fi
+
+SOAP=SOAPdenovo-63mer
+
+if [[ $BEST_KMER -gt 63 ]]; then
+    SOAP=SOAPdenovo-127mer
+fi
+
+# Seg faults with long kmers. Set to 99 if above 100
+if [[ $BEST_KMER -gt 100 ]]; then
+    BEST_KMER=99
+fi
+
+echo "Grab ideal kmer length step ended at [`date`]" >> $IND.log
+
+# ----------------------------------------------------------------------------------------
+# --- Construct pre-graph
+# ----------------------------------------------------------------------------------------
+
+echo "Construct pre-graph step began at [`date`]" >> $IND.log
+
+echo "[$IND]: Constructing pre-graph"
+
+$SOAP pregraph -s $CONFIG -K $BEST_KMER -R -o $OUT_DIR/$IND -p 12 \
+    1> $OUT_DIR/$IND.pregraph.log 2> $OUT_DIR/$IND.pregraph.err
+
+echo "Construct pre-graph step ended at [`date`]" >> $IND.log
+
+# ----------------------------------------------------------------------------------------
+# --- Construct contigs
+# ----------------------------------------------------------------------------------------
+
+echo "Construct contigs step began at [`date`]" >> $IND.log
+
+echo "[$IND]: Constructing contigs"
+
+$SOAP contig -g $OUT_DIR/$IND -R -p 12 \
+    1> $OUT_DIR/$IND.contig.log 2> $OUT_DIR/$IND.contig.err
+
+echo "Construct contigs step ended at [`date`]" >> $IND.log
+
+# ----------------------------------------------------------------------------------------
+# --- Map reads to contigs
+# ----------------------------------------------------------------------------------------
+
+echo "Map reads to contigs step began at [`date`]" >> $IND.log
+
+echo "[$IND]: Mapping reads to contigs"
+
+$SOAP map -s $CONFIG -g $OUT_DIR/$IND -p 12 \
+    1> $OUT_DIR/$IND.map.log 2> $OUT_DIR/$IND.map.err
+
+echo "Map reads to contigs step ended at [`date`]" >> $IND.log
+
+# ----------------------------------------------------------------------------------------
+# --- Do scaffolding
+# ----------------------------------------------------------------------------------------
+
+echo "Scaffolding step began at [`date`]" >> $IND.log
+
+echo "[$IND]: Doing scaffolding"
+
+# Remove old links file
+rm -f $OUT_DIR/$IND.links
+
+$SOAP scaff -g $OUT_DIR/$IND -F \
+    1> $OUT_DIR/$IND.scaff.log 2> $OUT_DIR/$IND.scaff.err
+
+echo "Scaffolding step ended at [`date`]" >> $IND.log
+
+# ----------------------------------------------------------------------------------------
+# --- Clean up
+# ----------------------------------------------------------------------------------------
+
+echo "Clean up step began at [`date`]" >> $IND.log
+
+echo "[$IND]: Cleaning up"
+
+#rm $CONFIG
+#rm data/${IND}_TRIM_R1.rmdup.fastq
+#rm data/${IND}_TRIM_R2.rmdup.fastq
+
+echo "Clean up step ended at [`date`]" >> $IND.log
+
+exit;
+
+

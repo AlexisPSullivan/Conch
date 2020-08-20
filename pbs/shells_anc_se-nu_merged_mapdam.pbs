@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=1,walltime=48:00:00,mem=384gb
+#PBS -N a-se-nu_Mmapdam
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}.${PBS_ARRAYID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}.${PBS_ARRAYID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REF_KRAKEN4_NU="/storage/home/aps216/scratch/Conch/genomes/nuclear/Cayo_Agua_2-3_S1_kraken4"
+SHELL_ANC_FILT_READS_NU="/storage/home/aps216/scratch/Conch/data/shells/anc/filtered/nuclear/se/merged_bams"
+
+working_dir=$PBS_O_WORKDIR
+
+cd $working_dir
+
+# ------------------------------------------------------------------------------
+# mapDamage
+# ------------------------------------------------------------------------------
+
+FILT2=`ls ${SHELL_ANC_FILT_READS_NU}/*.sorted.rmdup.30x30.bam | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${SHELL_ANC_FILT_READS_NU}/\(.*\).sorted.rmdup.30x30..*:\1:"`
+
+module load samtools; samtools rmdup -S ${SHELL_ANC_FILT_READS_NU}/${FILT2}.sorted.rmdup.30x30.bam ${SHELL_ANC_FILT_READS_NU}/${MAP}.sorted.rmdupx2.30x30.bam
+
+module load mapdamage; mapDamage -i ${SHELL_ANC_FILT_READS_NU}/${FILT2}.sorted.rmdupx2.30x30.bam -r ${REF_KRAKEN4_NU}/Cayo_Agua_2-3_S1_kraken4.scafSeq-gt500.fa --merge-reference-sequences
+
+exit;
+

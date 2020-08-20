@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1,walltime=24:00:00
+#PBS -N raw_read#
+#PBS -m abe
+#PBS -M aps216@psu.edu
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# ------------------------------------------------------------------------------
+# Count number of raw reads for coverage estimation
+# ------------------------------------------------------------------------------
+
+working_dir=$PBS_O_WORKDIR
+
+cd $working_dir
+
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/MS-F-10-110_S32_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/MS-F-15-4_S33_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/MS-F-2-78_S29_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/MS-F-5-257_S30_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/MS-F-7-128_S31_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/qH2O-Lib-Blank_S23_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/U60-10_20_S24_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/U60-110_120-5659_S25_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/U61-20-30_S26_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/U61-50_60-5454_S27_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/anc/raw/U61-80_90-5596C_S28_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/BocaDrago3-10_S19_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/BocaDrago3-3_S18_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/CayoAgua2-3_S15_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/CayoAgua2-5_S16_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/CayoAgua2-6_S17_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/CayoAguaBoil1_S20_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/CayoAguaBoil2_S21_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/shells/mod/raw/CayoAguaBoil3_S22_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/tissue/raw/Boca_Drago_3-10_S5_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/tissue/raw/Boca_Drago_3-3_S4_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/tissue/raw/Cayo_Agua_2-3_S1_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/tissue/raw/Cayo_Agua_2-5_S2_R1.fastq.gz|wc -l)/4|bc
+echo $(zcat /storage/home/aps216/scratch/Conch/data/tissue/raw/Cayo_Agua_2-6_S3_R1.fastq.gz|wc -l)/4|bc
+
+exit;
+

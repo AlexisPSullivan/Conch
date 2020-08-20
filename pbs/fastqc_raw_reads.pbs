@@ -1,0 +1,79 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1,walltime=48:00:00,mem=96gb
+#PBS -N fastqc_raws
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+TISSUE_RAW_READS="/storage/home/aps216/scratch/Conch/data/tissue/raw"
+SHELL_RAW_ANC_READS="/storage/home/aps216/scratch/Conch/data/shells/anc/raw"
+SHELL_RAW_MOD_READS="/storage/home/aps216/scratch/Conch/data/shells/mod/raw"
+
+working_dir=$PBS_O_WORKDIR
+
+# ------------------------------------------------------------------------------
+# FastQC of Raw Reads
+# ------------------------------------------------------------------------------
+
+cd $working_dir
+
+#MT
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Boca_Drago_3-10_S5_R1.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Boca_Drago_3-10_S5_R2.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Boca_Drago_3-3_S4_R1.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Boca_Drago_3-3_S4_R2.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Cayo_Agua_2-3_S1_R1.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Cayo_Agua_2-3_S1_R2.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Cayo_Agua_2-5_S2_R1.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Cayo_Agua_2-5_S2_R2.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Cayo_Agua_2-6_S3_R1.fastq.gz
+module load fastqc; fastqc ${TISSUE_RAW_READS}/Cayo_Agua_2-6_S3_R2.fastq.gz
+
+#MS
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/BocaDrago3-10_S19_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/BocaDrago3-10_S19_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/BocaDrago3-3_S18_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/BocaDrago3-3_S18_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAgua2-3_S15_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAgua2-3_S15_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAgua2-5_S16_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAgua2-5_S16_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAgua2-6_S17_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAgua2-6_S17_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAguaBoil1_S20_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAguaBoil1_S20_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAguaBoil2_S21_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAguaBoil2_S21_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAguaBoil3_S22_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_MOD_READS}/CayoAguaBoil3_S22_R2.fastq.gz
+
+#AS
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-10-110_S32_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-10-110_S32_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-15-4_S33_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-15-4_S33_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-2-78_S29_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-2-78_S29_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-5-257_S30_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-5-257_S30_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-7-128_S31_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/MS-F-7-128_S31_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U60-10_20_S24_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U60-10_20_S24_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U60-110_120-5659_S25_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U60-110_120-5659_S25_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U61-20-30_S26_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U61-20-30_S26_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U61-50_60-5454_S27_R1.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U61-50_60-5454_S27_R2.fastq.gz
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U61-80_90-5596C_S28_R1.fastq.gz 
+module load fastqc; fastqc ${SHELL_RAW_ANC_READS}/U61-80_90-5596C_S28_R2.fastq.gz
+
+exit;
+

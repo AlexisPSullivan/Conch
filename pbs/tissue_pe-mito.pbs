@@ -1,0 +1,102 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=1,walltime=12:00:00,mem=96gb
+#PBS -N tissue_pe-m
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}.${PBS_ARRAYID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}.${PBS_ARRAYID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REF_KRAKEN4_MITO="/storage/home/aps216/scratch/Conch/genomes/mito/norgal_output4_noNuc"
+RAW_READS="/storage/home/aps216/scratch/Conch/data/tissue/raw"
+TRIM_READS="/storage/home/aps216/scratch/Conch/data/tissue/trimmed/pe"
+MAP_READS_MITO="/storage/home/aps216/scratch/Conch/data/tissue/mapped/mito/pe"
+FILT_READS_MITO="/storage/home/aps216/scratch/Conch/data/tissue/filtered/mito/pe"
+
+working_dir=$PBS_O_WORKDIR
+
+cd $working_dir
+
+# ------------------------------------------------------------------------------
+# Map sequences
+# ------------------------------------------------------------------------------
+
+## map trimmed reads
+TRIM=`ls ${TRIM_READS}/*_r1.fq.gz | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${TRIM_READS}/\(.*\)_r1.fq.*:\1:"`
+
+    echo "Mapping for individual shell $TRIM";
+
+# bwa mem ref.fa read1.fq read2.fq > aln-pe.sam
+module load bwa; bwa mem ${REF_KRAKEN4_MITO}/circular.candidate.fa ${TRIM_READS}/${TRIM}_r1.fq.gz ${TRIM_READS}/${TRIM}_r2.fq.gz > ${MAP_READS_MITO}/${TRIM}_mem-mito_pe.sam
+
+# ------------------------------------------------------------------------------
+# flagstats, sam > bam, sort, quality filter sequences
+# ------------------------------------------------------------------------------
+
+MAP=`ls ${MAP_READS_MITO}/*_mem-mito_pe.sam | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${MAP_READS_MITO}/\(.*\)_mem-mito_pe..*:\1:"`
+
+# Flagstats
+    echo "flagstats for individual shell $MAP";
+
+module load samtools; samtools flagstat ${MAP_READS_MITO}/${MAP}_mem-mito_pe.sam  > ${MAP_READS_MITO}/flagstat_${MAP}_mem-mito_pe
+
+# sam > bam mapped reads
+    echo "sam > bam for individual shell $MAP";
+    
+module load samtools; samtools view -bhS ${MAP_READS_MITO}/${MAP}_mem-mito_pe.sam > ${MAP_READS_MITO}/${MAP}_mem-mito_pe.bam
+
+# Sort
+    echo "Sort individual shell $MAP";
+
+module load samtools; samtools sort -o ${MAP_READS_MITO}/${MAP}_mem-mito_pe.sorted.bam ${MAP_READS_MITO}/${MAP}_mem-mito_pe.bam
+
+# Remove duplicates
+    echo "Removing duplicates for individual shell $MAP";
+    
+module load samtools; samtools rmdup -S ${MAP_READS_MITO}/${MAP}_mem-mito_pe.sorted.bam ${MAP_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.bam
+
+# Filter and index
+    echo "Filtering individual shell $MAP"
+
+module load samtools; samtools view -b -m 30 -q 30 ${MAP_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.bam -o ${FILT_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.30x30.bam
+
+module load samtools; samtools view -b -m 24 -q 20 ${MAP_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.bam -o ${FILT_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.24x20.bam
+
+module load samtools; samtools index ${FILT_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.30x30.bam
+
+module load samtools; samtools index ${FILT_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.24x20.bam
+
+# Flagstats
+    echo "flagstats for individual shell $MAP";
+
+module load samtools; samtools flagstat ${FILT_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.24x20.bam > ${FILT_READS_MITO}/flagstat_${MAP}_mem-mito_pe.sorted.rmdup.24x20
+
+module load samtools; samtools flagstat ${FILT_READS_MITO}/${MAP}_mem-mito_pe.sorted.rmdup.30x30.bam > ${FILT_READS_MITO}/flagstat_${MAP}_mem-mito_pe.sorted.rmdup.30x30
+
+# ------------------------------------------------------------------------------
+# Picard CollectWgsMetrics
+# ------------------------------------------------------------------------------
+
+FILT1=`ls ${FILT_READS_MITO}/*.sorted.rmdup.24x20.bam | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${FILT_READS_MITO}/\(.*\).sorted.rmdup.24x20..*:\1:"`
+
+    echo "WGS metrics individual shell $FILT1";
+
+module load picard; java -Xmx24g -jar $PICARD/picard.jar CollectWgsMetrics \
+   I=${FILT_READS_MITO}/${FILT1}.sorted.rmdup.24x20.bam \
+   O=${FILT_READS_MITO}/${FILT1}.sorted.rmdup.24x20.collect_wgs_metrics.txt \
+   R=${REF_KRAKEN4_MITO}/circular.candidate.fa 
+
+FILT2=`ls ${FILT_READS_MITO}/*.sorted.rmdup.30x30.bam | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${FILT_READS_MITO}/\(.*\).sorted.rmdup.30x30..*:\1:"`
+
+    echo "WGS metrics individual shell $FILT2";
+
+module load picard; java -Xmx24g -jar $PICARD/picard.jar CollectWgsMetrics \
+   I=${FILT_READS_MITO}/${FILT2}.sorted.rmdup.30x30.bam \
+   O=${FILT_READS_MITO}/${FILT2}.sorted.rmdup.30x30.collect_wgs_metrics.txt \
+   R=${REF_KRAKEN4_MITO}/circular.candidate.fa 
+
+exit;
+

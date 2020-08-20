@@ -1,0 +1,105 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=1,walltime=48:00:00,mem=96gb
+#PBS -N shells_mod_se-n
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}.${PBS_ARRAYID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}.${PBS_ARRAYID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REF_KRAKEN4_NU="/storage/home/aps216/scratch/Conch/genomes/nuclear/Cayo_Agua_2-3_S1_kraken4"
+RAW_READS="/storage/home/aps216/scratch/Conch/data/shells/mod/raw"
+TRIM_READS="/storage/home/aps216/scratch/Conch/data/shells/mod/trimmed/se"
+MAP_READS_NU="/storage/home/aps216/scratch/Conch/data/shells/mod/mapped/nuclear/se"
+FILT_READS_NU="/storage/home/aps216/scratch/Conch/data/shells/mod/filtered/nuclear/se"
+
+working_dir=$PBS_O_WORKDIR
+
+cd $working_dir
+
+# ------------------------------------------------------------------------------
+# Map sequences
+# ------------------------------------------------------------------------------
+
+## map trimmed reads
+TRIM=`ls ${TRIM_READS}/*.fq.gz | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${TRIM_READS}/\(.*\).fq.*:\1:"`
+
+    echo "Mapping for individual shell $TRIM";
+    
+# bwa aln -n 0.01 -o 2 -l 16500 -t 8
+module load bwa; bwa aln -n 0.01 -o 2 -l 16500 ${REF_KRAKEN4_NU}/Cayo_Agua_2-3_S1_kraken4.scafSeq-gt500.fa ${TRIM_READS}/${TRIM}.fq.gz > ${TRIM_READS}/${TRIM}_aln-nu_sa.sai
+
+# bwa samse ref.fa aln_sa.sai short_read.fq > aln-se.sam
+module load bwa; bwa samse ${REF_KRAKEN4_NU}/Cayo_Agua_2-3_S1_kraken4.scafSeq-gt500.fa ${TRIM_READS}/${TRIM}_aln-nu_sa.sai ${TRIM_READS}/${TRIM}.fq.gz > ${MAP_READS_NU}/${TRIM}_aln-nu_se.sam
+
+# ------------------------------------------------------------------------------
+# flagstats, sam > bam, sort, quality filter sequences
+# ------------------------------------------------------------------------------
+
+MAP=`ls ${MAP_READS_NU}/*_aln-nu_se.sam | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${MAP_READS_NU}/\(.*\)_aln-nu_se..*:\1:"`
+
+# Flagstats
+    echo "flagstats for individual shell $MAP";
+
+module load samtools; samtools flagstat ${MAP_READS_NU}/${MAP}_aln-nu_se.sam > ${MAP_READS_NU}/flagstat_${MAP}_aln-nu_se
+
+# sam > bam mapped reads
+    echo "sam > bam for individual shell $MAP";
+    
+module load samtools; samtools view -bhS ${MAP_READS_NU}/${MAP}_aln-nu_se.sam > ${MAP_READS_NU}/${MAP}_aln-nu_se.bam
+
+# Sort
+    echo "Sort individual shell $MAP";
+
+module load samtools; samtools sort -o ${MAP_READS_NU}/${MAP}_aln-nu_se.sorted.bam ${MAP_READS_NU}/${MAP}_aln-nu_se.bam
+
+# Remove duplicates
+    echo "Removing duplicates for individual shell $MAP";
+    
+module load samtools; samtools rmdup -S ${MAP_READS_NU}/${MAP}_aln-nu_se.sorted.bam ${MAP_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.bam
+
+# Filter and index
+    echo "Filtering individual shell $MAP"
+
+module load samtools; samtools view -b -m 30 -q 30 ${MAP_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.bam -o ${FILT_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.30x30.bam
+
+module load samtools; samtools view -b -m 24 -q 20 ${MAP_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.bam -o ${FILT_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.24x20.bam
+
+module load samtools; samtools index ${FILT_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.30x30.bam
+
+module load samtools; samtools index ${FILT_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.24x20.bam
+
+# Flagstats
+    echo "flagstats for individual shell $MAP";
+
+module load samtools; samtools flagstat ${FILT_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.30x30.bam > ${FILT_READS_NU}/flagstat_${MAP}_aln-nu_se.sorted.rmdup.30x30
+
+module load samtools; samtools flagstat ${FILT_READS_NU}/${MAP}_aln-nu_se.sorted.rmdup.24x20.bam > ${FILT_READS_NU}/flagstat_${MAP}_aln-nu_se.sorted.rmdup.24x20
+
+# ------------------------------------------------------------------------------
+# Picard CollectWgsMetrics
+# ------------------------------------------------------------------------------
+
+FILT1=`ls ${FILT_READS_NU}/*.sorted.rmdup.24x20.bam | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${FILT_READS_NU}/\(.*\).sorted.rmdup.24x20..*:\1:"`
+
+    echo "WGS metrics individual shell $FILT1";
+
+module load picard; java -Xmx24g -jar $PICARD/picard.jar CollectWgsMetrics \
+   I=${FILT_READS_NU}/${FILT1}.sorted.rmdup.24x20.bam \
+   O=${FILT_READS_NU}/${FILT1}.sorted.rmdup.24x20.collect_wgs_metrics.txt \
+   R=${REF_KRAKEN4_NU}/Cayo_Agua_2-3_S1_kraken4.scafSeq-gt500.fa 
+
+FILT2=`ls ${FILT_READS_NU}/*.sorted.rmdup.30x30.bam | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${FILT_READS_NU}/\(.*\).sorted.rmdup.30x30..*:\1:"`
+
+    echo "WGS metrics individual shell $FILT2";
+
+module load picard; java -Xmx24g -jar $PICARD/picard.jar CollectWgsMetrics \
+   I=${FILT_READS_NU}/${FILT2}.sorted.rmdup.30x30.bam \
+   O=${FILT_READS_NU}/${FILT2}.sorted.rmdup.30x30.collect_wgs_metrics.txt \
+   R=${REF_KRAKEN4_NU}/Cayo_Agua_2-3_S1_kraken4.scafSeq-gt500.fa 
+
+exit;
+

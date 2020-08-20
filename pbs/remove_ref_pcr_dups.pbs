@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=8,walltime=48:00:00,mem=96gb
+#PBS -N remove-ref-dups
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REF_READS="/storage/home/aps216/scratch/Conch/data/RefAssembly"
+
+working_dir=$PBS_O_WORKDIR
+
+cd $working_dir
+
+# ----------------------------------------------------------------------------------------
+# --- Remove PCR duplicates
+# ----------------------------------------------------------------------------------------
+
+IND=Cayo_Agua_2-3_S1
+
+wget https://raw.githubusercontent.com/linneas/condetri/master/filterPCRdupl.pl \
+     -O scripts/tmp_filterPCRdupl_${IND}_TRIM.pl
+
+perl scripts/tmp_filterPCRdupl_${IND}_TRIM.pl \
+    -fastq1=${REF_READS}/${IND}_TRIM_R1.fastq.gz \
+    -fastq2=${REF_READS}/${IND}_TRIM_R2.fastq.gz \
+    -prefix=${REF_READS}/${IND}_TRIM \
+    -cmp=30
+
+module load tabix; bgzip -c ${REF_READS}/${IND}_TRIM_uniq1.fastq > ${REF_READS}/${IND}_TRIM_R1.rmdup.fastq.gz
+module load tabix; bgzip -c ${REF_READS}/${IND}_TRIM_uniq2.fastq > ${REF_READS}/${IND}_TRIM_R2.rmdup.fastq.gz
+
+module load tabix; bgzip -d ${REF_READS}/${IND}_TRIM_R1.rmdup.fastq.gz
+module load tabix; bgzip -d ${REF_READS}/${IND}_TRIM_R2.rmdup.fastq.gz
+
+READ1=${REF_READS}/${IND}_TRIM_R1.rmdup.fastq
+READ2=${REF_READS}/${IND}_TRIM_R2.rmdup.fastq
+
+# While here, get length distribution
+awk 'NR%4 == 2 {lengths[length($0)]++} END {for (l in lengths) {print l, lengths[l]}}' \
+    $READ1 > ${READ1/.fastq/.length}
+awk 'NR%4 == 2 {lengths[length($0)]++} END {for (l in lengths) {print l, lengths[l]}}' \
+    $READ2 > ${READ2/.fastq/.length}
+
+exit;
+

@@ -1,0 +1,33 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=10,walltime=3:00:00,mem=96gb
+#PBS -N kraken_refs
+#PBS -m abe
+#PBS -M aps216@psu.edu
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REFREADS="/storage/home/aps216/scratch/Conch/data/RefAssembly"
+
+working_dir=$PBS_O_WORKDIR
+
+# ------------------------------------------------------------------------------
+# Run program
+# ------------------------------------------------------------------------------
+
+cd $working_dir
+
+IND=`ls ${REFREADS}/*_TRIM_R1.rmdup.fastq | head -n $PBS_ARRAYID | tail -n1 | sed -e "s:${REFREADS}/\(.*\)_TRIM_R1.rmdup..*:\1:"`
+
+    echo "Generating kraken outputs for $IND";
+
+/storage/home/aps216/scratch/kraken/kraken_db/kraken2 --db /storage/home/aps216/scratch/kraken/kraken_db/ --threads 10 --classified-out ${REFREADS}/Cayo_Agua_2-3_TRIM#_classified-out.fastq --report Cayo_Agua_2-3_S1_classified.report --paired ${REFREADS}/Cayo_Agua_2-3_S1_TRIM_R1.rmdup.fastq ${REFREADS}/Cayo_Agua_2-3_S1_TRIM_R2.rmdup.fastq
+
+/storage/home/aps216/scratch/kraken/kraken_db/kraken2 --db /storage/home/aps216/scratch/kraken/kraken_db/ --threads 10 --unclassified-out ${REFREADS}/Cayo_Agua_2-3_TRIM#_unclassified-out.fastq --report Cayo_Agua_2-3_S1_unclassified.report --paired ${REFREADS}/Cayo_Agua_2-3_S1_TRIM_R1.rmdup.fastq ${REFREADS}/Cayo_Agua_2-3_S1_TRIM_R2.rmdup.fastq
+
+exit;
+

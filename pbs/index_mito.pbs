@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=8,walltime=4:00:00
+#PBS -N index_mito
+#PBS -M aps216@psu.edu
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+REF_KRAKEN4_MITO="/storage/home/aps216/scratch/Conch/genomes/mito/norgal_output4_wNuc"
+
+working_dir=$PBS_O_WORKDIR
+
+# ------------------------------------------------------------------------------
+# Index reference mitochondrial assembly generated from kraken4
+# ------------------------------------------------------------------------------
+
+cd $working_dir
+
+module load bwa; bwa index ${REF_KRAKEN4_MITO}/circular.candidate.fa
+
+module load picard; java -Xmx24g -jar $PICARD/picard.jar CreateSequenceDictionary REFERENCE=${REF_KRAKEN4_MITO}/circular.candidate.fa OUTPUT=${REF_KRAKEN4_MITO}/circular.candidate.dict
+
+samtools faidx ${REF_KRAKEN4_MITO}/circular.candidate.fa
+
+exit;
+
