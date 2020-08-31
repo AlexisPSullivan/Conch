@@ -1,7 +1,7 @@
 # Conch
  Code and analyses for my dissertation work with Strombus pugilis - Perry Lab, Penn State University
 
-All scripts written by APS
+All scripts written by APS, with input from Christina Bergey and Stephanie Marciniak
 
 [![DOI](https://zenodo.org/badge/289037174.svg)](https://zenodo.org/badge/latestdoi/289037174)
 
