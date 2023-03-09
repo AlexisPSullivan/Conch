@@ -5,4 +5,4 @@ All scripts written by APS, with input from Christina Bergey and Stephanie Marci
 
 [![DOI](https://zenodo.org/badge/289037174.svg)](https://zenodo.org/badge/latestdoi/289037174)
 
-Full paper now on bioRxiv: Modern, archaeological, and paleontological DNA analysis of a human-harvested marine gastropod (Strombus pugilis) from Caribbean Panama (https://www.biorxiv.org/content/10.1101/2020.08.26.269308v1)
+Publication in Molecular Ecology Resources: Modern, archaeological, and paleontological DNA analysis of a human-harvested marine gastropod (Strombus pugilis) from Caribbean Panama (https://onlinelibrary.wiley.com/doi/10.1111/1755-0998.13361)
